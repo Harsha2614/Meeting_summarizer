@@ -91,10 +91,15 @@ tqdm
 Create a .env file inside your backend/ folder:
 
 OPENAI_API_KEY=your_openai_api_key_here
+
 MYSQL_HOST=localhost
+
 MYSQL_USER=root
+
 MYSQL_PASSWORD=your_password
+
 MYSQL_DB=meeting_summarizer
+
 STORAGE_DIR=uploads
 
 
