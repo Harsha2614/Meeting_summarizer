@@ -63,13 +63,13 @@ git clone https://github.com/Harsha2614/meeting-summarizer.git
 
 cd meeting-summarizer/backend
 
-###2️⃣ Create a virtual environment
+### 2️⃣ Create a virtual environment
 
 python -m venv .venv
 
 .venv\Scripts\activate  # (Windows)
 
-###3️⃣ Install dependencies
+### 3️⃣ Install dependencies
 
 pip install --upgrade pip
 
@@ -97,16 +97,16 @@ MYSQL_PASSWORD=your_password
 MYSQL_DB=meeting_summarizer
 STORAGE_DIR=uploads
 
-#🏃 Run the Application
-##1️⃣ Start the FastAPI backend
+# 🏃 Run the Application
+## 1️⃣ Start the FastAPI backend
 cd backend
 python -m uvicorn app:app --reload
 
-##2️⃣ Open the frontend
+## 2️⃣ Open the frontend
 
 Just open frontend/index.html in your browser.
 
-#🧠 How It Works
+# 🧠 How It Works
 
 Upload an MP3/WAV file from the frontend.
 
@@ -118,7 +118,7 @@ Both transcript & summary are stored in MySQL.
 
 The frontend displays the full summary instantly and lists previous uploads.
 
-#💡 Future Enhancements
+# 💡 Future Enhancements
 
 Multi-speaker diarization
 
@@ -128,7 +128,7 @@ Email/share summary feature
 
 Web dashboard with user login
 
-#🧑‍💻 Author
+# 🧑‍💻 Author
 
 Narayana Harsha Vardhan
 
