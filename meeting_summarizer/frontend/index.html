@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>🎤 Meeting Summarizer (MySQL Version)</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f8f9fa;
+        margin: 0;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-width: 850px;
+        width: 100%;
+        padding: 2rem;
+      }
+
+      h2 {
+        margin-top: 0;
+      }
+
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.2s;
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #0056b3;
+      }
+
+      #spinner {
+        display: none;
+        text-align: center;
+        margin: 1rem 0;
+      }
+
+      .loader {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      pre {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+
+      #result {
+        margin-top: 1.5rem;
+      }
+
+      #status {
+        text-align: center;
+        color: #555;
+        margin-top: 0.5rem;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        background: #f8f9fa;
+        margin: 0.4rem 0;
+        padding: 0.6rem;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      li button {
+        background-color: #28a745;
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+
+      li button:hover {
+        background-color: #1f7c32;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h2>🎤 Meeting Summarizer (MySQL)</h2>
+      <p>Upload an audio file (MP3/WAV) to get a transcript and summary.</p>
+
+      <input id="file" type="file" accept="audio/*" />
+      <button id="upload">Upload & Process</button>
+
+      <div id="spinner">
+        <div class="loader"></div>
+        <p id="status">Processing audio... please wait ⏳</p>
+      </div>
+
+      <div id="result">
+        <em>Working on the summary...</em>
+      </div>
+
+      <hr />
+      <h3>📚 Past Meetings (from MySQL)</h3>
+      <ul id="meetingList">
+        <li>Loading meetings...</li>
+      </ul>
+    </div>
+
+    <script>
+      const uploadButton = document.getElementById("upload");
+      const fileInput = document.getElementById("file");
+      const spinner = document.getElementById("spinner");
+      const resultDiv = document.getElementById("result");
+      const statusText = document.getElementById("status");
+
+      // Upload and process audio
+      uploadButton.onclick = async () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please choose an audio file first.");
+          return;
+        }
+
+        uploadButton.disabled = true;
+        spinner.style.display = "block";
+        resultDiv.innerHTML = `<em>Working on the summary...</em>`;
+        statusText.textContent = "Uploading and processing audio...";
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const startTime = Date.now();
+
+        try {
+          const res = await fetch("http://127.0.0.1:8000/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Server Error (${res.status}): ${errText}`);
+          }
+
+          const data = await res.json();
+          const endTime = Date.now();
+          const totalTime = ((endTime - startTime) / 1000).toFixed(1);
+
+          spinner.style.display = "none";
+          uploadButton.disabled = false;
+
+          if (data.summary && data.transcript) {
+            resultDiv.innerHTML = `
+              <h3>📝 Transcript</h3>
+              <pre>${data.transcript}</pre>
+              <h3>📋 Summary</h3>
+              <pre>${data.summary}</pre>
+              <p style="text-align:center; color:gray;">⏱️ Processed in ${totalTime} seconds</p>
+            `;
+            resultDiv.scrollIntoView({ behavior: "smooth" });
+            loadMeetings(); // refresh list
+          } else {
+            resultDiv.innerHTML = `<p style="color:red;">⚠️ Failed to process audio. Check backend logs.</p>`;
+          }
+        } catch (err) {
+          console.error(err);
+          spinner.style.display = "none";
+          uploadButton.disabled = false;
+          resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${err.message}</p>`;
+        }
+      };
+
+      // Load all past meetings
+      async function loadMeetings() {
+        try {
+          const res = await fetch("http://127.0.0.1:8000/list");
+          const data = await res.json();
+          const listEl = document.getElementById("meetingList");
+          listEl.innerHTML = "";
+
+          if (!data.meetings || data.meetings.length === 0) {
+            listEl.innerHTML = "<li>No past meetings found.</li>";
+            return;
+          }
+
+          data.meetings.forEach((m) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <span>
+                <strong>${m.filename}</strong> — ${new Date(m.uploaded_at).toLocaleString()}
+              </span>
+              <button onclick="viewSummary('${m.id}')">View Summary</button>
+            `;
+            listEl.appendChild(li);
+          });
+        } catch (err) {
+          console.error("Error loading meetings:", err);
+        }
+      }
+
+      // View summary for selected meeting
+      async function viewSummary(id) {
+        try {
+          const res = await fetch(`http://127.0.0.1:8000/summary/${id}`);
+          const data = await res.json();
+          resultDiv.innerHTML = `
+            <h3>📋 Summary for Meeting</h3>
+            <pre>${data.summary}</pre>
+          `;
+          resultDiv.scrollIntoView({ behavior: "smooth" });
+        } catch (err) {
+          console.error(err);
+          alert("Failed to load summary.");
+        }
+      }
+
+      // Load meetings on page load
+      loadMeetings();
+    </script>
+  </body>
+</html>
