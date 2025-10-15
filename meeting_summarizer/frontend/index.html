@@ -4,61 +4,99 @@
     <meta charset="utf-8" />
     <title>🎤 Meeting Summarizer (MySQL Version)</title>
     <style>
+      /* 🌈 Global Styles */
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #e0eafc, #cfdef3);
         margin: 0;
         padding: 2rem;
         display: flex;
         flex-direction: column;
         align-items: center;
+        min-height: 100vh;
       }
 
       .card {
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         max-width: 850px;
         width: 100%;
         padding: 2rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
       }
 
       h2 {
         margin-top: 0;
+        font-size: 1.8rem;
+        color: #333;
+        text-align: center;
+      }
+
+      h3 {
+        color: #007bff;
+      }
+
+      p {
+        color: #444;
+      }
+
+      /* 🎧 Upload Section */
+      input[type="file"] {
+        margin: 1rem 0;
+        padding: 0.6rem;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        background: #f8f9fa;
+        width: 100%;
+        transition: 0.3s;
+      }
+
+      input[type="file"]:hover {
+        background: #e9f3ff;
       }
 
       button {
-        background-color: #007bff;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
         color: white;
         border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
+        padding: 12px 24px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 16px;
-        transition: background 0.2s;
-      }
-
-      button:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
       }
 
       button:hover:not(:disabled) {
-        background-color: #0056b3;
+        background: linear-gradient(90deg, #0056b3, #008cff);
+        box-shadow: 0 6px 16px rgba(0, 123, 255, 0.45);
+        transform: translateY(-2px);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
       #spinner {
         display: none;
         text-align: center;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
       }
 
       .loader {
         border: 6px solid #f3f3f3;
         border-top: 6px solid #007bff;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        width: 45px;
+        height: 45px;
         animation: spin 1s linear infinite;
         margin: 0 auto;
       }
@@ -75,14 +113,22 @@
       pre {
         background: #f8f9fa;
         padding: 1rem;
-        border-radius: 8px;
+        border-radius: 10px;
         max-height: 400px;
         overflow-y: auto;
         white-space: pre-wrap;
+        font-size: 15px;
+        line-height: 1.5;
+        border-left: 4px solid #007bff;
       }
 
       #result {
         margin-top: 1.5rem;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.2rem;
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+        min-height: 50px;
       }
 
       #status {
@@ -91,49 +137,81 @@
         margin-top: 0.5rem;
       }
 
+      hr {
+        margin: 2rem 0;
+        border: none;
+        border-top: 2px dashed #d0d0d0;
+      }
+
+      /* 🗂️ Meeting List */
       ul {
         list-style: none;
         padding: 0;
+        margin: 0;
       }
 
       li {
         background: #f8f9fa;
-        margin: 0.4rem 0;
-        padding: 0.6rem;
-        border-radius: 6px;
+        margin: 0.5rem 0;
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: background 0.3s, transform 0.2s;
+      }
+
+      li:hover {
+        background: #eaf2ff;
+        transform: scale(1.01);
       }
 
       li button {
-        background-color: #28a745;
-        padding: 6px 12px;
+        background: linear-gradient(90deg, #28a745, #4cd964);
+        padding: 6px 14px;
         font-size: 14px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
       }
 
       li button:hover {
-        background-color: #1f7c32;
+        background: linear-gradient(90deg, #1f7c32, #3cc755);
+      }
+
+      /* 📱 Responsive */
+      @media (max-width: 600px) {
+        body {
+          padding: 1rem;
+        }
+        .card {
+          padding: 1.2rem;
+        }
+        button {
+          width: 100%;
+        }
+        input[type="file"] {
+          font-size: 14px;
+        }
       }
     </style>
   </head>
 
   <body>
     <div class="card">
-      <h2>🎤 Meeting Summarizer (MySQL)</h2>
+      <h2>🎤 Meeting Summarizer</h2>
       <p>Upload an audio file (MP3/WAV) to get a transcript and summary.</p>
 
       <input id="file" type="file" accept="audio/*" />
       <button id="upload">Upload & Process</button>
 
+      <!-- Spinner appears only during processing -->
       <div id="spinner">
         <div class="loader"></div>
         <p id="status">Processing audio... please wait ⏳</p>
       </div>
 
-      <div id="result">
-        <em>Working on the summary...</em>
-      </div>
+      <!-- Result area starts empty -->
+      <div id="result"></div>
 
       <hr />
       <h3>📚 Past Meetings (from MySQL)</h3>
@@ -157,9 +235,10 @@
           return;
         }
 
+        // Clear previous result and show spinner
+        resultDiv.innerHTML = "";
         uploadButton.disabled = true;
         spinner.style.display = "block";
-        resultDiv.innerHTML = `<em>Working on the summary...</em>`;
         statusText.textContent = "Uploading and processing audio...";
 
         const formData = new FormData();
@@ -182,6 +261,7 @@
           const endTime = Date.now();
           const totalTime = ((endTime - startTime) / 1000).toFixed(1);
 
+          // Hide spinner when done
           spinner.style.display = "none";
           uploadButton.disabled = false;
 
