@@ -97,9 +97,13 @@ MYSQL_PASSWORD=your_password
 MYSQL_DB=meeting_summarizer
 STORAGE_DIR=uploads
 
+
 # 🏃 Run the Application
+
 ## 1️⃣ Start the FastAPI backend
+
 cd backend
+
 python -m uvicorn app:app --reload
 
 ## 2️⃣ Open the frontend
